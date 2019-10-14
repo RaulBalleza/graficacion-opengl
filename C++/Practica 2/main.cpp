@@ -1,6 +1,7 @@
-#include "core/text.h"
-#include "core/point.h"
-#include "core/slider.h"
+#include "../core/text.h"
+#include "../core/point.h"
+#include "../core/slider.h"
+#include "../core/menu.h"
 // Use the STL extension of C++.
 using namespace std;
 
@@ -12,13 +13,6 @@ float aumentarXS1 = 0;
 float aumentarYS1 = 0;
 float aumentarXS2 = 0;
 float aumentarYS2 = 0;
-//Variables de opciones
-static int isGrid = 1;
-static int isAxis = 1;
-static int isRule = 1;
-static int isSub = 1;
-static int isSum = 1;
-static int isP = 1;
 static float pixel = 30;                      //Tamaño de cada cuadro del mapa
 static long font = (long)GLUT_BITMAP_8_BY_13; // Font selection.
 float s1_[2] = {0, 0};
@@ -136,7 +130,7 @@ void drawSliders() //Dibuja los slider para modificar el vector A y el vector B
     escribirTextoBitMap(GLUT_BITMAP_8_BY_13, texto); //Vector A y su valor actual
 }
 
-void drawSliderLines()/*Dibuja los vectores A y B segun 
+void drawSliderLines() /*Dibuja los vectores A y B segun 
 el valor de su respectivo slider*/
 {
     //Dibujado del vector A
@@ -202,7 +196,7 @@ void drawAxis(void) //Dibuja los ejes X y Y del Mapa
     glEnd();
 }
 
-void drawGrid(void)//Dibuja la malla de cuadros del mapa
+void drawGrid(void) //Dibuja la malla de cuadros del mapa
 {
     int i;
 
@@ -374,50 +368,6 @@ void keyInput(unsigned char key, int x, int y)
     default:
         break;
     }
-}
-
-void rightMenu(int id)
-{
-    if (id == 1)
-        exit(0);
-}
-
-void grid_menu(int id)
-{
-    if (id == 3)
-        isGrid = 1;
-    if (id == 4)
-        isGrid = 0;
-    glutPostRedisplay();
-}
-
-void axis_menu(int id)
-{
-    if (id == 5)
-        isAxis = 1;
-    if (id == 6)
-        isAxis = 0;
-    glutPostRedisplay();
-}
-
-void makeMenu(void)
-{
-    int sub_menu;
-    sub_menu = glutCreateMenu(grid_menu);
-    glutAddMenuEntry("On", 3);
-    glutAddMenuEntry("Off", 4);
-
-    int sub_menu2;
-    sub_menu2 = glutCreateMenu(axis_menu);
-    glutAddMenuEntry("On", 5);
-    glutAddMenuEntry("Off", 6);
-
-    glutCreateMenu(rightMenu);
-    glutAddSubMenu("Grid", sub_menu);
-    glutAddSubMenu("Axis", sub_menu2);
-
-    glutAddMenuEntry("Quit", 1);
-    glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
 // Initialization routine.
