@@ -50,6 +50,7 @@ void Slider::setSliderX(float x_)
     if (sliderx > x + max)
     {
         sliderx = x + max;
+        value = max;
         //cout << "sliderX: " << sliderx << endl;
     }
     else
@@ -57,6 +58,7 @@ void Slider::setSliderX(float x_)
         if (sliderx < x + min)
         {
             sliderx = x + min;
+            value = min;
             //cout << "sliderX: " << sliderx << endl;
         }
     }

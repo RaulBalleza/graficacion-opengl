@@ -17,9 +17,9 @@
                 "kind": "test",
                 "isDefault": true
             },
-            "command": "make",
+            "command": "bash",
             "args": [
-                "run"
+                "Z.sh"
             ]
         }
     ]

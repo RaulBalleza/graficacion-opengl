@@ -21,39 +21,45 @@ static int isSum = 1;
 static int isP = 1;
 static float pixel = 30;                      //Tamaño de cada cuadro del mapa
 static long font = (long)GLUT_BITMAP_8_BY_13; // Font selection.
-int sliding = 0;
 float s1_[2] = {0, 0};
 float s2_[2] = {0, 0};
 Point *CP = NULL;
 Point P = Point(-pixel, 4 * pixel);
 Point O = Point(0, 0);
-vector<Point> ParalelGr{Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)};
+vector<Point> ParalelGr{Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)};
 static Slider s1 = Slider(8 * pixel, 9 * pixel, 10);
 static Slider s2 = Slider(8 * pixel, 8 * pixel, 10);
+char *texto = new char();
 
-float distanceX(Point p0, Point p1)
+//FUNCIONES AUXILIARES
+
+float distanceX(Point p0, Point p1) //Mide la distancia en X entre 2 punto
 {
     return abs(sqrt(pow(p0.getX() - p1.getX(), 2)));
 }
 
-float distanceY(Point p0, Point p1)
+float distanceY(Point p0, Point p1) //Mide la distancia en Y entre 2 puntos
 {
     return abs(sqrt(pow(p0.getY() - p1.getY(), 2)));
 }
 
-void drawP()
+bool inRange(unsigned low, unsigned high, unsigned x) /*Detecta si se ah dado click en 
+algun punto dibujado en el mapa*/
 {
-    glPushMatrix();
+    return ((x - low) <= (high - low));
+}
+
+void drawP() //Dibuja el punto P
+{
     glColor3f(0.0, 0.0, 0.0);
     glBegin(GL_LINES);
     glVertex2i(O.getX(), O.getY());
     glVertex2i(P.getX(), P.getY());
     glEnd();
     P.drawPoint();
-    glPopMatrix();
 }
 
-void drawParalelogramo()
+void drawParalelogramo() //Dibuja el area del paralelogramo
 {
     ParalelGr.at(0).setX(O.getX());
     ParalelGr.at(0).setY(O.getY());
@@ -64,13 +70,9 @@ void drawParalelogramo()
     ParalelGr.at(2).setX(ParalelGr.at(0).getX() + s2_[0] + (aumentarXS2 * pixel));
     ParalelGr.at(2).setY(ParalelGr.at(0).getY() + s2_[1] * aumentarYS2);
 
-    ParalelGr.at(3).setX(ParalelGr.at(1).getX()+ParalelGr.at(2).getX());
-    ParalelGr.at(3).setY(ParalelGr.at(2).getY());
+    ParalelGr.at(3).setX(ParalelGr.at(1).getX() + s2_[0] + (aumentarXS2 * pixel));
+    ParalelGr.at(3).setY(ParalelGr.at(2).getY() - s1_[1] + (aumentarYS1 * pixel));
 
-    ParalelGr.at(4).setX((s1_[0] * aumentarXS1) + (s2_[0] + (aumentarXS2 * pixel)));
-    ParalelGr.at(4).setY(s2_[1] * aumentarYS2);
-
-    glPushMatrix();
     glLineWidth(4.0);
     glEnable(GL_LINE_STIPPLE);
     glLineStipple(1, 0x5555);
@@ -89,25 +91,25 @@ void drawParalelogramo()
     glVertex3f(ParalelGr.at(3).getX(), ParalelGr.at(3).getY(), 0.0);
     glEnd();
     glDisable(GL_LINE_STIPPLE);
-    glPopMatrix();
 }
 
-void drawOperations()
+void drawOperations() //Dibuja las operaciones disponibles
 {
-    glPushMatrix();
     glLineWidth(4.0);
     glEnable(GL_LINE_STIPPLE);
     glLineStipple(1, 0x5555);
-
+    //Dibuja la suma de los vectores A y B
     if (isSum)
     {
         glColor3f(1.0, 0.0, 0.0);
         glBegin(GL_LINES);
         glVertex3f(0.0, 0.0, 0.0);
-        glVertex3f(ParalelGr.at(4).getX(), ParalelGr.at(4).getY(), 0.0);
+        glVertex3f((distanceX(points.at(0), points.at(1)) * s1.getValue()),
+                   (distanceY(points.at(0), points.at(2)) * s2.getValue()),
+                   0.0);
         glEnd();
     }
-
+    //Dibuja la resta de los vectores A-B
     if (isSub)
     {
         glColor3f(0.0, 1.0, 0.0);
@@ -118,81 +120,75 @@ void drawOperations()
     }
 
     glDisable(GL_LINE_STIPPLE);
-    glPopMatrix();
 }
 
-bool inRange(unsigned low, unsigned high, unsigned x)
+void drawSliders() //Dibuja los slider para modificar el vector A y el vector B
 {
-    return ((x - low) <= (high - low));
-}
-
-void drawSliders()
-{
-    glPushMatrix();
     glColor3f(0.0, 0.0, 1.0);
     s1.drawSlider();
+    glRasterPos3f(s1.getSliderX() - 10, s1.getSliderY() + 10, 0.0);
+    sprintf(texto, "A = %.1f", s1.getValue());
+    escribirTextoBitMap(GLUT_BITMAP_8_BY_13, texto); //Vector A y su valor actual
     glColor3f(1.0, 0.0, 1.0);
     s2.drawSlider();
-    glPopMatrix();
+    glRasterPos3f(s2.getSliderX() - 10, s2.getSliderY() + 10, 0.0);
+    sprintf(texto, "B = %.1f", s2.getValue());
+    escribirTextoBitMap(GLUT_BITMAP_8_BY_13, texto); //Vector A y su valor actual
 }
 
-void drawSliderLines()
+void drawSliderLines()/*Dibuja los vectores A y B segun 
+el valor de su respectivo slider*/
 {
-
+    //Dibujado del vector A
     aumentarXS1 = (distanceX(points.at(0), points.at(1)) / pixel) * abs(s1.getValue());
     aumentarYS1 = (distanceY(points.at(0), points.at(1)) / pixel) * abs(s1.getValue());
     if (points.at(1).getX() < points.at(0).getX())
         aumentarXS1 *= -1;
     if (points.at(1).getY() < points.at(0).getY())
         aumentarYS1 *= -1;
-    //cout << "AumentarX: " << aumentarXS1 << endl;
-    //cout << "AumentarY: " << aumentarYS1 << endl;
-    //cout << "BlueValue: " << s1.getValue() << endl;
+
     glColor3f(0.0, 0.0, 1.0);
     glLineWidth(3.5);
     glBegin(GL_LINES);
     glVertex2i(0, 0);
     glVertex2i(s1_[0] * aumentarXS1, s1_[1] + (aumentarYS1 * pixel));
     glEnd();
-    //cout << "Blue \t X: " << s1_[0] << "\tY: " << s1_[1] << endl;
 
+    //Dibujado del vector B
     aumentarXS2 = (distanceX(points.at(0), points.at(2)) / pixel) * abs(s2.getValue());
     aumentarYS2 = (distanceY(points.at(0), points.at(2)) / pixel) * abs(s2.getValue());
     if (points.at(2).getX() < points.at(0).getX())
         aumentarXS2 *= -1;
     if (points.at(2).getY() < points.at(0).getY())
         aumentarYS2 *= -1;
+
     glColor3f(1.0, 0.0, 1.0);
-    glBegin(GL_LINES);  
+    glBegin(GL_LINES);
     glVertex2i(0, 0);
     glVertex2i(s2_[0] + (aumentarXS2 * pixel), s2_[1] * aumentarYS2);
     glEnd();
-    //cout << "Magenta \t X: " << s2_[0] << "\tY: " << s2_[1] << endl;
 }
 
-void drawLines()
+void drawLines() //Dibuja los vectores de control U y V
 {
-    glPushMatrix();
+    //Dibujado del vector U
     glColor3f(0.0, 0.0, 1.0);
     glLineWidth(3.0);
     glBegin(GL_LINES);
     glVertex2i(points.at(0).getX(), points.at(0).getY());
     glVertex2i(points.at(1).getX(), points.at(1).getY());
     glEnd();
-    //cout << "BlueLine \t X: " << points.at(1).getX() << "\tY: " << points.at(1).getY() << endl;
 
+    //Dibujado del vector V
     glColor3f(1.0, 0.0, 1.0);
     glBegin(GL_LINES);
     glVertex2i(points.at(0).getX(), points.at(0).getY());
     glVertex2i(points.at(2).getX(), points.at(2).getY());
     glEnd();
-    //cout << "MagentaLine \t X: " << points.at(2).getX() << "\tY: " << points.at(2).getY() << endl;
-    glPopMatrix();
 }
 
-void drawAxis(void)
+void drawAxis(void) //Dibuja los ejes X y Y del Mapa
 {
-    glPushMatrix();
     glColor3f(0.0, 0.0, 0.0);
     //Eje de las X
     glBegin(GL_LINES);
@@ -206,8 +202,7 @@ void drawAxis(void)
     glEnd();
 }
 
-// Function to draw a grid.
-void drawGrid(void)
+void drawGrid(void)//Dibuja la malla de cuadros del mapa
 {
     int i;
 
@@ -232,8 +227,7 @@ void drawGrid(void)
     glDisable(GL_LINE_STIPPLE);
 }
 
-// Drawing routine.
-void drawScene(void)
+void drawScene(void) //Funcion de dibujado principal
 {
     glClear(GL_COLOR_BUFFER_BIT);
     glColor3f(0.0, 0.0, 0.0);
@@ -242,26 +236,22 @@ void drawScene(void)
         drawGrid();
     if (isAxis)
         drawAxis();
-    drawLines();
-    drawPoints();
-    glPushMatrix();
-    glColor3f(0.0, 0.0, 0.0);
-    O.drawPoint();
-    glPopMatrix();
-    drawSliders();
     if (isP)
         drawP();
     if (isRule)
         drawParalelogramo();
+    drawLines();
+    drawPoints();
+    glColor3f(0.0, 0.0, 0.0);
+    O.drawPoint();
+    drawSliders();
     drawOperations();
     drawSliderLines();
     glutSwapBuffers();
 }
 
-void slider2MouseMove(int x, int y)
+void PassiveMouseS2(int x, int y)
 {
-    //cout << "X: " << x << endl;
-    //cout << "x: " << x << endl;
     tempX = -width / 2 + width * x / width;
     s2_[1] = 0;
     s2_[1] = s2_[1] + s2.getValue() * pixel;
@@ -270,18 +260,17 @@ void slider2MouseMove(int x, int y)
     glutPostRedisplay();
 }
 
-void slider1MouseMove(int x, int y)
+void PassiveMouseS1(int x, int y)
 {
     tempX = -width / 2 + width * x / width;
     s1_[0] = 0;
-    cout << "Value: " << s1.getValue() << endl;
     s1_[0] = s1_[0] + s1.getValue() * pixel;
     s1.setSliderX(tempX);
     glutPostRedisplay();
 }
-void myMouseMove(int x, int y)
+void PassiveMousePoints(int x, int y) /*Funcion para mover los puntos 
+una vez dado click en ellos*/
 {
-    //cout << "X: " << x << endl;
     tempX = -width / 2 + width * x / width;
     tempY = height / 2 - height * y / height;
 
@@ -295,9 +284,7 @@ void mouseCallBack(int btn, int state, int x, int y)
 
     if (btn == GLUT_LEFT_BUTTON && state == GLUT_DOWN && CP == NULL)
     {
-        //cout << "PUNTO" << currentPoint.getX();
         pointsIterator = points.begin();
-        //printf("Mouse call back: button=%d, state=%d, x=%d, y=%d\n", btn, state, x, y);
         x = x - width / 2;
         y = height / 2 - y;
         int i = 0;
@@ -306,7 +293,7 @@ void mouseCallBack(int btn, int state, int x, int y)
             inRange(O.getY() - pointSize, O.getY() + pointSize, y))
         {
             CP = &O;
-            glutPassiveMotionFunc(myMouseMove);
+            glutPassiveMotionFunc(PassiveMousePoints);
             return;
         }
 
@@ -314,36 +301,33 @@ void mouseCallBack(int btn, int state, int x, int y)
             inRange(P.getY() - pointSize, P.getY() + pointSize, y))
         {
             CP = &P;
-            glutPassiveMotionFunc(myMouseMove);
+            glutPassiveMotionFunc(PassiveMousePoints);
             return;
         }
 
         if (inRange(s1.getSliderX() - pointSize, s1.getSliderX() + pointSize, x) &&
             inRange(s1.getSliderY() - pointSize, s1.getSliderY() + pointSize, y))
         {
-            cout << "Slider" << endl;
             CP = &points.at(0);
-            glutPassiveMotionFunc(slider1MouseMove);
+            glutPassiveMotionFunc(PassiveMouseS1);
             return;
         }
 
         if (inRange(s2.getSliderX() - pointSize, s2.getSliderX() + pointSize, x) &&
             inRange(s2.getSliderY() - pointSize, s2.getSliderY() + pointSize, y))
         {
-            cout << "Slider2" << endl;
             CP = &points.at(0);
-            glutPassiveMotionFunc(slider2MouseMove);
+            glutPassiveMotionFunc(PassiveMouseS2);
             return;
         }
         while (pointsIterator != points.end())
         {
-            //cout << "Punto X: " << pointsIterator->getX() << ", Punto Y: " << pointsIterator->getY() << endl;
 
             if (inRange(pointsIterator->getX() - pointSize, pointsIterator->getX() + pointSize, x) &&
                 inRange(pointsIterator->getY() - pointSize, pointsIterator->getY() + pointSize, y))
             {
                 CP = &points.at(i);
-                glutPassiveMotionFunc(myMouseMove);
+                glutPassiveMotionFunc(PassiveMousePoints);
             }
             pointsIterator++;
             i++;
@@ -352,9 +336,7 @@ void mouseCallBack(int btn, int state, int x, int y)
     }
     if (btn == GLUT_LEFT_BUTTON && state == GLUT_DOWN && CP != NULL)
     {
-        cout << "Entro 2" << endl;
         CP = NULL;
-        sliding = 0;
         glutPassiveMotionFunc(NULL);
         glutPostRedisplay();
     }
@@ -397,10 +379,6 @@ void keyInput(unsigned char key, int x, int y)
 void rightMenu(int id)
 {
     if (id == 1)
-    {
-        glutPostRedisplay();
-    }
-    if (id == 2)
         exit(0);
 }
 
@@ -438,8 +416,7 @@ void makeMenu(void)
     glutAddSubMenu("Grid", sub_menu);
     glutAddSubMenu("Axis", sub_menu2);
 
-    glutAddMenuEntry("Clear", 1);
-    glutAddMenuEntry("Quit", 2);
+    glutAddMenuEntry("Quit", 1);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
@@ -448,10 +425,13 @@ void setup(void)
 {
     glClearColor(1.0, 1.0, 1.0, 0.0);
     makeMenu();
+    //PUNTOS INICIALES
     Point p0 = Point(-6 * pixel, 0);
     points.push_back(p0);
+    //Punto U
     Point p1 = Point(-5 * pixel, 0);
     points.push_back(p1);
+    //Punto V
     Point p2 = Point(-6 * pixel, pixel);
     points.push_back(p2);
 }
