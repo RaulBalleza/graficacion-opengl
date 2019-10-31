@@ -1,3 +1,4 @@
+/*DESARROLLADO POR RAUL ALEJADNDRO LOPEZ BALLEZA*/
 #include "../core/text.h"
 #include "../core/point.h"
 #include "../core/slider.h"
@@ -388,10 +389,10 @@ void setup(void)
 // Routine to output interaction instructions to the C++ window.
 void printInteraction(void)
 {
-    cout << "Interaction:" << endl;
-    cout << "Left click on a box on the left to select a primitive." << endl
-         << "Then left click on the drawing area: once for point, twice for line or rectangle." << endl
-         << "Right click for menu options." << endl;
+    cout << "/*DESARROLLADO POR RAUL ALEJADNDRO LOPEZ BALLEZA*/"<<endl;
+    cout << "Interaccion:" << endl;
+    cout << "Click derecho para abrir el menu de opciones" << endl;
+    cout << "Mueva los vectores con click izquierdo sobre los puntos, active y desactive opciones para ver los cambios seleccionados"<<endl;
 }
 
 // Main routine.
