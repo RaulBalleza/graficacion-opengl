@@ -56,6 +56,7 @@ class Shape:
     def draw_shape(self, x, y):
         #print(x, y)
         # print("-----------------------------------------")
+        self.squares.clear()
         temp_y = 0
         self.set_midpoint_xy(x, y)
         for count in range(3):
