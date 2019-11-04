@@ -42,7 +42,7 @@ class Shape:
         #print(check_distance(self.midpoint_x, self.midpoint_y, x, y))
         if check_distance(self.midpoint_x, self.midpoint_y, x, y) <= point_size*2:
             return True
-
+    
     def get_midpoint_x(self):
         return self.midpoint_x
 

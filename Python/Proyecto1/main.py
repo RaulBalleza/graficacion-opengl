@@ -22,6 +22,7 @@ init = True
 game_shapes = list()
 elegible_shapes = list()
 
+
 def generate_board():
     # print(square_module.shapes)
     global board_squares
@@ -36,12 +37,9 @@ def generate_board():
             x += 1
         y += 1
 
-    for square in board_squares:
-        square.draw_square()
-
 
 def move_figure():
-    pass
+    game_shapes[shape_index].set_midpoint_xy(tempX, tempY)
 
 
 def drawSlider():
@@ -62,7 +60,8 @@ def printInteraction():
 def init():
     # red, green, blue, alpha from 0.0 to 1.0
     glClearColor(1.0, 1.0, 1.0, 0.0)
-    
+    generate_board()
+    set_elegible_shapes(3)
 
 
 def resize(w, h):
@@ -85,17 +84,18 @@ def keyInput(key, x, y):
     # Si la tecla presionada es el ESCAPE entonces el programa finaliza
     if key == ESCAPE:
         sys.exit()
-    if key == '+':
-        tempX += 1
-        glutPostRedisplay()
-    if key == '-':
-        tempY += 1
-        glutPostRedisplay()
+
 
 def set_elegible_shapes(number):
+    print("Function: set_elegible_shapes()")
     for count in range(number):
-        
+        aux_shape = square_module.shapes[random.randint(
+            0, len(square_module.shapes)-1)]
+        shape = square_module.Shape(aux_shape.get_points())
+        elegible_shapes.append(shape)
 
+
+'''
 def draw_shapes():
     x = 0
     y = 0
@@ -103,45 +103,69 @@ def draw_shapes():
     for count in range(3):
         glColor3ub(255, 0, 0)
 
-        shape = square_module.shapes[
+        shape = elegible_shapes[
             random.randint(
                 0,
-                len(square_module.shapes)-1)]
+                len(elegible_shapes))]
 
         shape.draw_shape(300, y)
         y += 150
     # glutPostRedisplay()
+'''
+
+
+def draw_elegible_shapes():
+    y = -200
+    for shape in elegible_shapes:
+        glColor3ub(255, 0, 0)
+        shape.set_midpoint_xy(300, y)
+        shape.draw_shape(shape.get_midpoint_x(), shape.get_midpoint_y())
+        y += 200
 
 
 def draw_game_shapes():
     for shape in game_shapes:
+        glColor3ub(255, 0, 0)
         shape.draw_shape(shape.get_midpoint_x(), shape.get_midpoint_y())
+
+
+def draw_board():
+    for square in board_squares:
+        square.draw_square()
 
 
 def displayMe():
     glClear(GL_COLOR_BUFFER_BIT)
     glLoadIdentity()
     drawSlider()
-    generate_board()
-    draw_shapes()
+    # draw_shapes()
+    draw_board()
+    draw_elegible_shapes()
+    if dragging:
+        move_figure()
     draw_game_shapes()
-    print("FIGURAS EN EL ARREGLO: ", len(square_module.shapes))
-    glFlush()
+    print("FIGURAS ELEGIBLES: ", len(elegible_shapes))
+    print("FIGURAS DE JUEGO: ", len(game_shapes))
     glutSwapBuffers()
 
 
 def check_figure(x, y):
-    #print("---------NUEVO FOR DE FIGURAS-------------")
+    # print("---------NUEVO FOR DE FIGURAS-------------")
     global shape_index
+    global elegible_shapes
+    global game_shapes
     shape_index = None
-    for shape in square_module.shapes:
+    for shape in elegible_shapes:
         if shape.in_range(x, y):
+            elegible_shapes.remove(shape)
+            print("Figura removida")
             game_shapes.append(shape)
+            print("Figura anadida")
             shape_index = game_shapes.index(shape)
-            print(shape_index)
+            print("game_shapes[shape_index]", shape_index)
             global dragging
             dragging = True
-            #print("Clickeaste en una figura")
+            # print("Clickeaste en una figura")
 
 
 def passive_mouse_control(x, y):
@@ -150,32 +174,42 @@ def passive_mouse_control(x, y):
     tempX = -width / 2 + width * x / width
     global tempY
     tempY = height / 2 - height * y / height
-    if(dragging):
-        # print("ARRASTRANDOOOO")
-        game_shapes[shape_index].set_midpoint_xy(tempX, tempY)
     glutPostRedisplay()
+
+
+def valid_movement():
+    return False
 
 
 def mouseControl(button, state, x, y):
     global dragging
     global tempX
-    tempX = -width / 2 + width * x / width
     global tempY
+    global shape_index
+
+    tempX = -width / 2 + width * x / width
     tempY = height / 2 - height * y / height
-    #print("tempX: ", tempX, "tempY: ", tempY)
+    # print("tempX: ", tempX, "tempY: ", tempY)
     if button == GLUT_LEFT_BUTTON and state == GLUT_DOWN and not dragging:
         # print("CLICKEADO")
         print("tempX: ", tempX, "tempY: ", tempY)
         check_figure(tempX, tempY)
         glutPassiveMotionFunc(passive_mouse_control)
     elif button == GLUT_LEFT_BUTTON and state == GLUT_DOWN and dragging:
+        if not valid_movement():
+            print("Movimiento no valido")
+            elegible_shapes.append(game_shapes[shape_index])
+            game_shapes.remove(game_shapes[shape_index])
+        elif valid_movement():
+            print("Movimiento valido")
+            set_elegible_shapes(1)
         shape_index = None
-        print("Entro a donde no debe entrar, pa")
         glutPassiveMotionFunc(None)
         dragging = False
         tempX = 0
         tempY = 0
-    # glutPostRedisplay()
+
+    glutPostRedisplay()
 
 
 def ciclo():
